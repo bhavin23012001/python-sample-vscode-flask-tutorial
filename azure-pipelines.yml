@@ -17,15 +17,12 @@ stages:
   jobs:
   - job: Build
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(pythonVersion)'
-
     - script: |
+        python --version
         python -m venv venv
-        source venv/bin/activate
+        venv\Scripts\activate
         pip install -r requirements.txt
-      displayName: 'Install dependencies'
+      displayName: 'Install dependencies (Self-hosted Python)'
 
     - task: PublishBuildArtifacts@1
       inputs:
