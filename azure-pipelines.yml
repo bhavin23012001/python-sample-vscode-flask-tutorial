@@ -9,12 +9,7 @@ trigger:
       - docs/**
 
 pool:
-  name: MyFreePool
-  demands:
-    - agent -equals agent
-
-variables:
-  pythonVersion: '3.10'
+  name: MyFreePool  # Ensure this exists in Azure DevOps > Project Settings > Agent Pools
 
 stages:
 - stage: Build
@@ -32,17 +27,9 @@ stages:
         pip install -r requirements.txt
       displayName: 'Install dependencies'
 
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
-        replaceExistingArchive: true
-
     - task: PublishBuildArtifacts@1
       inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        pathToPublish: '$(System.DefaultWorkingDirectory)'
         artifactName: 'drop'
 
 - stage: Deploy
@@ -63,4 +50,4 @@ stages:
               azureSubscription: 'AzureFlaskConnection'
               appType: 'webApp'
               appName: 'flask-demo-app'
-              package: '$(Pipeline.Workspace)/drop/flaskapp.zip'
+              package: '$(Pipeline.Workspace)/drop'
