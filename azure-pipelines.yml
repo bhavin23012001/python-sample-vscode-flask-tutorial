@@ -13,42 +13,43 @@ pool:
   demands:
     - agent -equals agent2
 
-variables:
-  pythonVersion: '3.9'
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: Build
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(pythonVersion)'
+    - script: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
 
-- task: Checkout@1
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(System.DefaultWorkingDirectory)'
+        artifactName: 'drop'
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install Python dependencies'
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWebApp
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
 
-- script: |
-    python -m unittest discover -s . -p 'test_*.py'
-  displayName: 'Run unit tests'
-
-- task: ArchiveFiles@2
-  inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
-    replaceExistingArchive: true
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: 'AzureFlaskConnection'
-    appType: 'webAppLinux'
-    appName: '<your-app-name>'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'AzureFlaskConnection'
+              appType: 'webApp'
+              appName: 'flask-demo-app'
+              package: '$(Pipeline.Workspace)/drop'
