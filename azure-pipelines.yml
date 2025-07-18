@@ -13,6 +13,9 @@ pool:
   demands:
     - agent -equals agent2
 
+variables:
+  pythonVersion: '3.10'
+
 stages:
 - stage: Build
   displayName: 'Build Stage'
@@ -29,9 +32,17 @@ stages:
         pip install -r requirements.txt
       displayName: 'Install dependencies'
 
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
+        replaceExistingArchive: true
+
     - task: PublishBuildArtifacts@1
       inputs:
-        pathToPublish: '$(System.DefaultWorkingDirectory)'
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'drop'
 
 - stage: Deploy
@@ -52,4 +63,4 @@ stages:
               azureSubscription: 'AzureFlaskConnection'
               appType: 'webApp'
               appName: 'flask-demo-app'
-              package: '$(Pipeline.Workspace)/drop'
+              package: '$(Pipeline.Workspace)/drop/flaskapp.zip'
