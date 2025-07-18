@@ -1,0 +1,47 @@
+# .azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main  # change if your branch is named differently
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  pythonVersion: '3.9'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(pythonVersion)'
+
+- task: Checkout@1
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Install Python dependencies'
+
+- script: |
+    python -m unittest discover -s . -p 'test_*.py'
+  displayName: 'Run unit tests'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<REPLACE_WITH_SERVICE_CONNECTION_NAME>'
+    appName: 'flask-demo-app'
+    package: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
+    startUpCommand: 'python startup.py'
