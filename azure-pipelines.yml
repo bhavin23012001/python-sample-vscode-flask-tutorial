@@ -47,7 +47,7 @@ steps:
 
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: '<REPLACE_WITH_SERVICE_CONNECTION_NAME>'
+    azureSubscription: 'AzureFlaskConnection'
     appName: 'flask-demo-app'
     package: '$(Build.ArtifactStagingDirectory)/flaskapp.zip'
     startUpCommand: 'python startup.py'
