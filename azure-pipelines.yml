@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: MyFreePool  # ✅ Use the actual pool name
+  name: MyFreePool  # your self-hosted agent pool
 
 variables:
   appName: 'flask-demo-app'
