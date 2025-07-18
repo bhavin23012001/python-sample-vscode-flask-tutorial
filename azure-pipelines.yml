@@ -1,11 +1,17 @@
-# .azure-pipelines.yml
 trigger:
   branches:
     include:
-      - main  # change if your branch is named differently
+      - main
+  paths:
+    exclude:
+      - azure-pipelines.yml
+      - README.md
+      - docs/**
 
 pool:
-  vmImage: ubuntu-latest
+  name: MyFreePool
+  demands:
+    - agent -equals agent2
 
 variables:
   pythonVersion: '3.9'
