@@ -53,10 +53,10 @@ stages:
           - download: current
             artifact: drop
 
-          # ✅ Deploy only the zipped package
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'AzureFlaskConnection'
               appType: 'webApp'
               appName: 'flask-demo-app'
-              package: '$(Pipeline.Workspace)/drop/deploy.zip'
+              package: '$(Pipeline.Workspace)/drop/your-app-folder-or-zip-here'
+
