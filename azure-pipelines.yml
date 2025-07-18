@@ -1,39 +1,48 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - azure-pipelines.yml
+      - README.md
+      - docs/**
 
 pool:
-  name: MyFreePool  # your self-hosted agent pool
-
-variables:
-  appName: 'flask-demo-app'
-  zipName: 'app_package.zip'
+  name: MyFreePool
 
 stages:
 - stage: Build
+  displayName: 'Build Stage'
   jobs:
-  - job: BuildAndPackage
+  - job: Build
     steps:
-    - task: UsePythonVersion@0
+    - script: |
+        echo "Using local Python installation..."
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" --version
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m venv venv
+        call venv\Scripts\activate.bat
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m pip install --upgrade pip
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m pip install -r requirements.txt
+      displayName: 'Install dependencies (Self-hosted Python)'
+
+    # ✅ Archive only required files
+    - task: ArchiveFiles@2
       inputs:
-        versionSpec: '3.x'
-        addToPath: true
-
-    - script: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-      displayName: 'Install dependencies'
-
-    - script: |
-        powershell Compress-Archive -Path * -DestinationPath $(zipName)
-      displayName: 'Zip application files'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/deploy.zip'
+        replaceExistingArchive: true
 
     - task: PublishBuildArtifacts@1
       inputs:
-        PathtoPublish: '$(zipName)'
-        ArtifactName: 'drop'
-        publishLocation: 'Container'
+        pathToPublish: '$(System.DefaultWorkingDirectory)'
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
 
 - stage: Deploy
+  displayName: 'Deploy Stage'
   dependsOn: Build
   jobs:
   - deployment: DeployWebApp
@@ -45,9 +54,11 @@ stages:
           - download: current
             artifact: drop
 
+          # ✅ Deploy only the zipped package
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'AzureFlaskConnection'
               appType: 'webApp'
-              appName: '$(appName)'
-              package: '$(Pipeline.Workspace)/drop/$(zipName)'
+              appName: 'flask-demo-app'
+              package: '$(Pipeline.Workspace)/drop'
+              package: '$(Pipeline.Workspace)/drop/deploy.zip'
