@@ -9,7 +9,7 @@ trigger:
       - docs/**
 
 pool:
-  name: MyFreePool  # Ensure this exists in Azure DevOps > Project Settings > Agent Pools
+  name: MyFreePool
 
 stages:
 - stage: Build
@@ -18,10 +18,12 @@ stages:
   - job: Build
     steps:
     - script: |
-        python --version
-        python -m venv venv
-        venv\Scripts\activate
-        pip install -r requirements.txt
+        echo "Using local Python installation..."
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" --version
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m venv venv
+        call venv\Scripts\activate.bat
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m pip install --upgrade pip
+        "C:\agent\_work\_tool\Python\3.10.13\x64\python.exe" -m pip install -r requirements.txt
       displayName: 'Install dependencies (Self-hosted Python)'
 
     - task: PublishBuildArtifacts@1
